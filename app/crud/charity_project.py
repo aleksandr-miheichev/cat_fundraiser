@@ -36,31 +36,5 @@ class CRUDCharityProject(CRUDBase):
         charity_project_id = charity_project_id.scalars().first()
         return charity_project_id
 
-    async def get_projects_by_completion_rate(
-            self,
-            db_session: AsyncSession,
-    ) -> list[CharityProject]:
-        """
-        Получает список всех закрытых проектов, отсортированный по времени,
-        которое потребовалось для закрытия проекта — от тех, что закрылись
-        быстрее всего, до тех, что долго собирали нужную сумму.
-
-        Атрибуты:
-            - session (AsyncSession): сессия SQLAlchemy.
-
-        Возвращает:
-            Список проектов, отсортированный по времени, которое потребовалось
-            для закрытия проекта.
-        """
-        result = await db_session.execute(
-            select(CharityProject).where(
-                CharityProject.fully_invested == True  # noqa
-            )
-        )
-        return sorted(
-            result.scalars().all(),
-            key=lambda project: project.close_date - project.create_date
-        )
-
 
 charity_project_crud = CRUDCharityProject(CharityProject)

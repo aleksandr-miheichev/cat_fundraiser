@@ -8,10 +8,13 @@ from app.core.user import current_superuser
 
 from app.crud.charity_project import charity_project_crud
 from app.services.google_api import (
-    set_user_permissions, spreadsheets_create, spreadsheets_update_value
+    set_user_permissions, spreadsheets_create, spreadsheets_update_value,
+    get_projects_by_completion_rate
 )
 
-URL_GOOGLE_TABLES = 'https://docs.google.com/spreadsheets/d/'
+GOOGLE_TABLES_URL = 'https://docs.google.com/spreadsheets/d/{}'
+UPDATE_ERROR_MSG = 'Ошибка обновления электронной таблицы: {}'
+
 router = APIRouter()
 
 
@@ -21,7 +24,7 @@ router = APIRouter()
 )
 async def get_charity_projects_report(
         session: AsyncSession = Depends(get_async_session),
-        google_services: Aiogoogle = Depends(get_service)
+        google_client: Aiogoogle = Depends(get_service)
 
 ):
     """
@@ -30,16 +33,24 @@ async def get_charity_projects_report(
 
     Параметры:
       - session (AsyncSession): сессия SQLAlchemy.
-      - google_services (Aiogoogle): экземпляр Aiogoogle для взаимодействия с
+      - google_client (Aiogoogle): экземпляр Aiogoogle для взаимодействия с
         API Google.
 
     Возвращает:
         str: URL созданной электронной таблицы Google.
     """
-    projects = await charity_project_crud.get_projects_by_completion_rate(
-        session)
-    google_spreadsheet_id = await spreadsheets_create(google_services)
-    await set_user_permissions(google_spreadsheet_id, google_services)
-    await spreadsheets_update_value(google_spreadsheet_id, projects,
-                                    google_services)
-    return URL_GOOGLE_TABLES + google_spreadsheet_id
+    projects = await charity_project_crud.get_fully_invested(
+        session
+    )
+    sorted_projects = get_projects_by_completion_rate(projects)
+    google_spreadsheet_id = await spreadsheets_create(google_client)
+    await set_user_permissions(google_spreadsheet_id, google_client)
+    try:
+        await spreadsheets_update_value(
+            google_spreadsheet_id,
+            sorted_projects,
+            google_client
+        )
+    except Exception as e:
+        print(UPDATE_ERROR_MSG.format(e))
+    return GOOGLE_TABLES_URL.format(google_spreadsheet_id)

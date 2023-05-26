@@ -3,8 +3,10 @@ from http.client import BAD_REQUEST, NOT_FOUND, UNPROCESSABLE_ENTITY
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.google_client import COLUMN_COUNT, ROW_COUNT
 from app.crud.charity_project import charity_project_crud
 from app.models import CharityProject
+
 
 PROJECT_EXISTS = 'Проект с таким именем уже существует!'
 PROJECT_NOT_FOUND = 'Проект не найден!'
@@ -12,6 +14,12 @@ PROJECT_NOT_DELETE = 'В проект были внесены средства, 
 CLOSED_PROJECT_NOT_EDITED = 'Закрытый проект нельзя редактировать!'
 REQUIRED_AMOUNT_NOT_LESS_THAN_INVESTED = (
     'Требуемая сумма не должна быть меньше уже вложенной!'
+)
+ERROR_EXCEED_MAXIMUM_COLUMNS = (
+    'Данные превышают максимальное количество столбцов в электронной таблице!'
+)
+ERROR_EXCEED_MAXIMUM_ROWS = (
+    'Данные превышают максимальное количество строк в электронной таблице!'
 )
 
 
@@ -133,3 +141,28 @@ def ensure_full_amount_greater_than_invested(
             status_code=UNPROCESSABLE_ENTITY,
             detail=REQUIRED_AMOUNT_NOT_LESS_THAN_INVESTED
         )
+
+
+def ensure_spreadsheet_data_fits(data: list[list[str]]) -> None:
+    """
+    Проверяет, что предоставленные данные помещаются в электронную таблицу.
+
+    Аргументы:
+        - data (list[list[str]]): данные, которые нужно вставить в электронную
+          таблицу.
+
+    Вызывает:
+        HTTPException: если какая-либо строка в данных имеет больше столбцов,
+        чем разрешено.
+    """
+    if len(data) > ROW_COUNT:
+        raise HTTPException(
+            status_code=BAD_REQUEST,
+            detail=ERROR_EXCEED_MAXIMUM_ROWS,
+        )
+    for row in data:
+        if len(row) > COLUMN_COUNT:
+            raise HTTPException(
+                status_code=BAD_REQUEST,
+                detail=ERROR_EXCEED_MAXIMUM_COLUMNS,
+            )

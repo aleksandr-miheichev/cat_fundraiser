@@ -177,3 +177,20 @@ class CRUDBase:
             self.model.fully_invested == False  # noqa
         ))
         return result.scalars().all()
+
+    async def get_fully_invested(self, session: AsyncSession):
+        """
+        Собирает все экземпляры модели, в которых объект проинвестирован
+        (fully_invested == True).
+
+        Атрибуты:
+          - session (AsyncSession): SQLAlchemy сессия.
+
+        Возвращает:
+            Список экземпляров модели, для которых значение
+            fully_invested = True.
+        """
+        result = await session.execute(select(self.model).where(
+            self.model.fully_invested == True  # noqa
+        ))
+        return result.scalars().all()
