@@ -1,8 +1,14 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import (BaseModel, Extra, Field, NonNegativeInt, PositiveInt,
-                      validator)
+from pydantic import (
+    BaseModel,
+    Extra,
+    Field,
+    NonNegativeInt,
+    PositiveInt,
+    validator
+)
 
 FIELDS_CAN_BE_EMPTY = 'Поля не могут быть пустыми!'
 LONG_NAME = 'Имя слишком длинное!'
