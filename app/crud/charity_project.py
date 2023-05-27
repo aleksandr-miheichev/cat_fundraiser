@@ -28,13 +28,9 @@ class CRUDCharityProject(CRUDBase):
             ID благотворительного проекта, или None, если подходящий проект не
             найден.
         """
-        charity_project_id = await session.execute(
-            select(CharityProject.id).where(
-                CharityProject.name == charity_project_name
-            )
-        )
-        charity_project_id = charity_project_id.scalars().first()
-        return charity_project_id
+        return (await session.execute(select(CharityProject.id).where(
+            CharityProject.name == charity_project_name
+        ))).scalars().first()
 
 
 charity_project_crud = CRUDCharityProject(CharityProject)

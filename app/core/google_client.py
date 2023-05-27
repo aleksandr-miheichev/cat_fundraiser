@@ -21,9 +21,6 @@ INFO = {
 }
 cred = ServiceAccountCreds(scopes=SCOPES, **INFO)
 
-COLUMN_COUNT = 11
-ROW_COUNT = 100
-
 
 async def get_service():
     """

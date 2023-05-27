@@ -1,16 +1,13 @@
 from aiogoogle import Aiogoogle
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
 from app.core.google_client import get_service
 from app.core.user import current_superuser
-
 from app.crud.charity_project import charity_project_crud
-from app.services.google_api import (
-    set_user_permissions, spreadsheets_create, spreadsheets_update_value,
-    get_projects_by_completion_rate
-)
+from app.services.google_api import (set_user_permissions, spreadsheets_create,
+                                     spreadsheets_update_value)
 
 GOOGLE_TABLES_URL = 'https://docs.google.com/spreadsheets/d/{}'
 UPDATE_ERROR_MSG = 'Ошибка обновления электронной таблицы: {}'
@@ -39,18 +36,15 @@ async def get_charity_projects_report(
     Возвращает:
         str: URL созданной электронной таблицы Google.
     """
-    projects = await charity_project_crud.get_fully_invested(
-        session
-    )
-    sorted_projects = get_projects_by_completion_rate(projects)
+    projects = await charity_project_crud.get_fully_invested(session)
     google_spreadsheet_id = await spreadsheets_create(google_client)
     await set_user_permissions(google_spreadsheet_id, google_client)
     try:
         await spreadsheets_update_value(
             google_spreadsheet_id,
-            sorted_projects,
+            projects,
             google_client
         )
     except Exception as e:
-        print(UPDATE_ERROR_MSG.format(e))
+        raise HTTPException(status_code=500, detail=UPDATE_ERROR_MSG.format(e))
     return GOOGLE_TABLES_URL.format(google_spreadsheet_id)

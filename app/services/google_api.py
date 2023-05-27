@@ -3,13 +3,21 @@ from datetime import datetime
 
 from aiogoogle import Aiogoogle
 
-from app.api.validators import ensure_spreadsheet_data_fits
 from app.core.config import settings
-from app.core.google_client import COLUMN_COUNT, ROW_COUNT
 from app.models import CharityProject
 
+OVER_NUMBER_OF_ROWS = (
+    'В таблице слишком много строк: {number_lines}. Максимально допустимое '
+    'значение - {max_number_rows}'
+)
+EXCEED_NUMBER_OF_COLUMNS = (
+    'В таблице слишком много столбцов: {number_columns}. Максимально '
+    'допустимое значение - {max_number_columns}'
+)
 FORMAT = "%Y/%m/%d %H:%M:%S"
 ID_LIST = 0
+COLUMN_COUNT = 11
+ROW_COUNT = 100
 SPREADSHEET_TEMPLATE = dict(
     properties=dict(
         title='Отчет от {date}',
@@ -32,10 +40,7 @@ HEADER = [
 ]
 
 
-async def spreadsheets_create(
-        google_services_wrapper: Aiogoogle,
-        spreadsheet_template=SPREADSHEET_TEMPLATE
-) -> str:
+async def spreadsheets_create(google_services_wrapper: Aiogoogle) -> str:
     """
     Создает новую электронную таблицу Google с определенными свойствами и
     настройками.
@@ -49,17 +54,17 @@ async def spreadsheets_create(
     Возвращает:
         str: ID созданной электронной таблицы Google.
     """
-    now_date_time = datetime.now().strftime(FORMAT)
-    spreadsheet_body = deepcopy(spreadsheet_template)
+    spreadsheet_body = deepcopy(SPREADSHEET_TEMPLATE)
     spreadsheet_body['properties']['title'] = (
-        spreadsheet_body['properties']['title'].format(date=now_date_time)
+        spreadsheet_body['properties']['title'].format(
+            date=datetime.now().strftime(FORMAT)
+        )
     )
     service = await google_services_wrapper.discover('sheets', 'v4')
     response = await google_services_wrapper.as_service_account(
         service.spreadsheets.create(json=spreadsheet_body)
     )
-    spreadsheet_id = response['spreadsheetId']
-    return spreadsheet_id
+    return response['spreadsheetId']
 
 
 async def set_user_permissions(
@@ -110,10 +115,13 @@ async def spreadsheets_update_value(
     Возвращает:
         str: ID обновленной электронной таблицы Google.
     """
-    now_date_time = datetime.now().strftime(FORMAT)
     service = await google_services_wrapper.discover('sheets', 'v4')
     header = deepcopy(HEADER)
-    header[0][1] = header[0][1].format(date=now_date_time)
+    header[0][1] = header[0][1].format(date=datetime.now().strftime(FORMAT))
+    charity_projects = sorted(
+        charity_projects,
+        key=lambda project: project.close_date - project.create_date
+    )
     table_values = [
         *header,
         *[list(map(str, [
@@ -121,35 +129,28 @@ async def spreadsheets_update_value(
             project['close_date'] - project['create_date'],
             project['description']
         ])) for project in charity_projects]]
-    ensure_spreadsheet_data_fits(table_values)
+    max_rows = len(table_values)
+    if max_rows > ROW_COUNT:
+        raise ValueError(OVER_NUMBER_OF_ROWS.format(
+            number_lines=len(table_values),
+            max_number_rows=ROW_COUNT
+        ))
+    max_columns = max(map(len, table_values))
+    if max_columns > COLUMN_COUNT:
+        raise ValueError(EXCEED_NUMBER_OF_COLUMNS.format(
+            number_columns=max_columns,
+            max_number_columns=COLUMN_COUNT
+        ))
     update_body = {
         'majorDimension': 'ROWS',
         'values': table_values
     }
-    max_columns = max(len(row) for row in HEADER)
     await google_services_wrapper.as_service_account(
         service.spreadsheets.values.update(
             spreadsheetId=spreadsheet_id,
-            range=f'R1C1:R{len(table_values)}C{max_columns}',
+            range=f'R1C1:R{max_rows}C{max_columns}',
             valueInputOption='USER_ENTERED',
             json=update_body
         )
     )
     return spreadsheet_id
-
-
-def get_projects_by_completion_rate(projects):
-    """
-    Сортирует список проектов на основе времени, затраченного на их завершение.
-
-    Аргументы:
-      - projects (list): список экземпляров проектов.
-
-    Возвращает:
-        list: список проектов, отсортированный по времени, затраченному на
-        завершение, от самого короткого до самого длинного.
-    """
-    return sorted(
-        projects,
-        key=lambda project: project.close_date - project.create_date
-    )

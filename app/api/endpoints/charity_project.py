@@ -1,22 +1,18 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.validators import (
-    check_charity_project_exist,
-    check_charity_project_name_duplicate,
-    ensure_full_amount_greater_than_invested,
-    ensure_project_has_no_investment,
-    ensure_project_is_not_closed,
-)
+from app.api.validators import (check_charity_project_exist,
+                                check_charity_project_name_duplicate,
+                                ensure_full_amount_greater_than_invested,
+                                ensure_project_has_no_investment,
+                                ensure_project_is_not_closed)
 from app.core.db import get_async_session
 from app.core.user import current_superuser
 from app.crud.charity_project import charity_project_crud
 from app.crud.donation import donation_crud
-from app.schemas.charity_project import (
-    CharityProjectCreate,
-    CharityProjectDB,
-    CharityProjectUpdate
-)
+from app.schemas.charity_project import (CharityProjectCreate,
+                                         CharityProjectDB,
+                                         CharityProjectUpdate)
 from app.services.investment import run_investment_process
 
 LIST_ALL_PROJECTS = 'Получает список всех проектов.'
@@ -53,10 +49,9 @@ async def get_all_charity_projects(
     Возвращает:
         list[CharityProjectDB]: список всех благотворительных проектов.
     """
-    all_charity_projects = await charity_project_crud.get_multi(
+    return await charity_project_crud.get_multi(
         session=session
     )
-    return all_charity_projects
 
 
 @router.post(

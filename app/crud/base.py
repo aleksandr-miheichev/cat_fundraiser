@@ -131,11 +131,9 @@ class CRUDBase:
         Возвращает:
             Список проектов, которые не полностью профинансированы.
         """
-        unfunded_charity_projects = (await session.execute(
-            select(self.model).where(not_(self.model.fully_invested))
-            .order_by(self.model.create_date)
-        )).scalars().all()
-        return unfunded_charity_projects
+        return (await session.execute(select(self.model).where(
+            not_(self.model.fully_invested)
+        ).order_by(self.model.create_date))).scalars().all()
 
     async def get_charity_project_obj_by_id(
             self,
@@ -153,13 +151,9 @@ class CRUDBase:
             Объект благотворительного проекта, или None, если подходящий
             проект не найден.
         """
-        charity_project_obj = await session.execute(
-            select(self.model).where(
-                self.model.id == charity_project_id
-            )
-        )
-        charity_project_obj = charity_project_obj.scalars().first()
-        return charity_project_obj
+        return (await session.execute(select(self.model).where(
+            self.model.id == charity_project_id
+        ))).scalars().first()
 
     async def get_uninvested(self, session: AsyncSession):
         """
@@ -190,7 +184,6 @@ class CRUDBase:
             Список экземпляров модели, для которых значение
             fully_invested = True.
         """
-        result = await session.execute(select(self.model).where(
+        return (await session.execute(select(self.model).where(
             self.model.fully_invested == True  # noqa
-        ))
-        return result.scalars().all()
+        ))).scalars().all()
