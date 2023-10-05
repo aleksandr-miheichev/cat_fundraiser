@@ -4,8 +4,9 @@
 
 - [Описание проекта](#описание-проекта)
 - [Технологический стек](#технологический-стек)
-- [Шаблон наполнения файла .env](#шаблон-наполнения-файла-env)
 - [Как развернуть проект](#как-развернуть-проект)
+- [Шаблон наполнения файла .env](#шаблон-наполнения-файла-env)
+- [Настройка базы данных](#настройка-базы-данных)
 - [Запуск приложения](#запуск-приложения)
 - [Документация API](#документация-api)
 - [Над проектом работал](#над-проектом-работал)
@@ -68,30 +69,6 @@
 
 ---
 
-### Шаблон наполнения файла .env:
-
-```
-APP_TITLE=Кошачий благотворительный фонд
-DESCRIPTION=Сервис для поддержки котиков!
-DATABASE_URL=sqlite+aiosqlite:///./fastapi.db
-SECRET=Secret
-FIRST_SUPERUSER_EMAIL=test@gmail.com
-FIRST_SUPERUSER_PASSWORD=test
-EMAIL=ya.test@gmail.com
-TYPE=service_account
-PROJECT_ID=massive-current-387709
-PRIVATE_KEY_ID=35613ds5fg13ds56g43sdh4513sdf5h46
-PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\xxyyzz=\n-----END PRIVATE KEY-----\n"
-CLIENT_EMAIL=admin@massive-current-387709.iam.gserviceaccount.com
-CLIENT_ID=117011975999992899009
-AUTH_URI=https://accounts.google.com/o/oauth2/auth
-TOKEN_URI=https://oauth2.googleapis.com/token
-AUTH_PROVIDER_X509_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
-CLIENT_X509_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/admin2%40massive-current-387709.iam.gserviceaccount.com
-```
-
----
-
 ### Как развернуть проект:
 
 Клонировать репозиторий и перейти в него в терминале используя команду
@@ -119,6 +96,34 @@ source venv/Scripts/activate
 ```bash
 pip install -r requirements.txt
 ```
+
+___
+
+### Шаблон наполнения файла .env:
+
+```
+APP_TITLE=Кошачий благотворительный фонд
+DESCRIPTION=Сервис для поддержки котиков!
+DATABASE_URL=sqlite+aiosqlite:///./fastapi.db
+SECRET=Secret
+FIRST_SUPERUSER_EMAIL=test@gmail.com
+FIRST_SUPERUSER_PASSWORD=test
+EMAIL=ya.test@gmail.com
+TYPE=service_account
+PROJECT_ID=massive-current-387709
+PRIVATE_KEY_ID=35613ds5fg13ds56g43sdh4513sdf5h46
+PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\xxyyzz=\n-----END PRIVATE KEY-----\n"
+CLIENT_EMAIL=admin@massive-current-387709.iam.gserviceaccount.com
+CLIENT_ID=117011975999992899009
+AUTH_URI=https://accounts.google.com/o/oauth2/auth
+TOKEN_URI=https://oauth2.googleapis.com/token
+AUTH_PROVIDER_X509_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+CLIENT_X509_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/admin2%40massive-current-387709.iam.gserviceaccount.com
+```
+
+___
+
+### Настройка базы данных:
 
 Применить миграции:
 
